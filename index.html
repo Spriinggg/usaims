@@ -305,6 +305,8 @@ function studentDuty(){
    <div class="card">
      <div class="toolbar"><b class="grow">My Internship Info</b><button class="btn sm" id="editDuty">Edit</button></div>
      <div class="kv">
+       <div class="k">University</div><div>${esc(p.company_name||'—')}</div>
+       <div class="k">University Address</div><div>${esc(p.company_address||'—')}</div>
        <div class="k">Report on Duty</div><div>${p.report_on_duty?fmtDate(p.report_on_duty):'—'}</div>
        <div class="k">Internship Period</div><div>${p.internship_start?fmtDate(p.internship_start):'—'} to ${p.internship_end?fmtDate(p.internship_end):'—'}</div>
        <div class="k">Department</div><div>${esc((DEPTS.find(d=>d.id===p.department_id)||{}).name||'—')}</div>
@@ -320,6 +322,8 @@ function editDutyModal(){
   const m=el(`<div class="modal-bg"><div class="modal">
     <h3>Edit My Info</h3>
     <div class="field"><label>Profile Photo</label><input type="file" id="e_photo" accept="image/*"></div>
+    <div class="field"><label>University</label><input id="e_company" value="${esc(p.company_name||'')}" placeholder="e.g. Universiti Teknologi Malaysia"></div>
+    <div class="field"><label>University Address</label><textarea id="e_addr" rows="2" placeholder="Full university address">${esc(p.company_address||'')}</textarea></div>
     <div class="row">
       <div class="field" style="flex:1;min-width:160px"><label>Report on Duty</label><input type="date" id="e_rod" value="${p.report_on_duty||''}"></div>
       <div class="field" style="flex:1;min-width:160px"><label>Phone Number</label><input id="e_mtel" value="${esc(p.mobile_tel||'')}" placeholder="e.g. 012-3456789"></div>
@@ -340,6 +344,8 @@ function editDutyModal(){
     if(f){ const url=await uploadFile(f); if(url) photo=url; }
     const patch={
       photo_url:photo,
+      company_name:m.querySelector('#e_company').value.trim(),
+      company_address:m.querySelector('#e_addr').value.trim(),
       report_on_duty:m.querySelector('#e_rod').value||null,
       internship_start:m.querySelector('#e_start').value||null,
       internship_end:m.querySelector('#e_end').value||null,
@@ -506,6 +512,8 @@ function supStudentModal(s){
       <div><div class="meta">${esc(s.programme||'')}<br>${esc(s.matric_no||'')} · ${esc(s.email||'')}</div></div>
     </div>
     <div class="kv">
+      <div class="k">University</div><div>${esc(s.company_name||'—')}</div>
+      <div class="k">University Address</div><div>${esc(s.company_address||'—')}</div>
       <div class="k">Report on Duty</div><div>${s.report_on_duty?fmtDate(s.report_on_duty):'—'}</div>
       <div class="k">Internship Period</div><div>${s.internship_start?fmtDate(s.internship_start):'—'} to ${s.internship_end?fmtDate(s.internship_end):'—'}</div>
       <div class="k">Phone Number</div><div>${esc(s.mobile_tel||'—')}</div>
