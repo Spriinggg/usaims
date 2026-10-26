@@ -593,6 +593,7 @@ function renderLV(){
 async function loadLVWeek(){
   const w=LV_WEEKS[LV_WEEK];
   const {data}=await sb.from('logbook_entries').select('*').eq('student_id',LV_STUDENT.id)
+    .neq('status','draft')   // supervisor only sees submitted / verified / rejected, never drafts
     .gte('entry_date',iso(w.start)).lte('entry_date',iso(w.end));
   LV_ENTRIES={};(data||[]).forEach(r=>LV_ENTRIES[r.entry_date]=r);
   const rows=$('lvRows');rows.innerHTML='';
