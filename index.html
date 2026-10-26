@@ -105,8 +105,8 @@
     </div>
 
     <div id="signupForm" class="hidden">
-      <div class="field"><label>Full Name</label><input id="su_name" placeholder="AMIRUL AFIQ AHMAD HISHAM"></div>
-      <div class="field"><label>Matric No.</label><input id="su_matric" placeholder="B24CS0007"></div>
+      <div class="field"><label>Full Name</label><input id="su_name" placeholder="Your full name (as per IC)"></div>
+      <div class="field"><label>Matric No.</label><input id="su_matric" placeholder="e.g. A12CS1234"></div>
       <div class="field"><label>Programme</label><input id="su_prog" placeholder="Bachelor of Computer Science ..."></div>
       <div class="field"><label>Email (Lark email)</label><input id="su_email" type="email" placeholder="name@my.uspizza.com"></div>
       <div class="field"><label>Password</label><input id="su_pw" type="password" placeholder="min 6 characters"></div>
@@ -124,6 +124,7 @@
     <div class="sess">US Pizza Internship<br><span id="sessText">Logbook System</span></div>
     <div class="spacer"></div>
     <div class="who" id="whoName">—</div>
+    <button class="btn sm ghost" id="pwBtn" style="background:rgba(255,255,255,.15);color:#fff;border-color:rgba(255,255,255,.5)">Change Password</button>
     <button class="btn sm ghost" id="logoutBtn" style="background:rgba(255,255,255,.15);color:#fff;border-color:rgba(255,255,255,.5)">Log out</button>
   </header>
   <div class="layout">
@@ -208,6 +209,30 @@ $('su_btn').onclick=async()=>{
 };
 
 $('logoutBtn').onclick=async()=>{await sb.auth.signOut();location.reload();};
+$('pwBtn').onclick=changePassModal;
+
+function changePassModal(){
+  const m=el(`<div class="modal-bg"><div class="modal">
+    <h3>Change Password</h3>
+    <div class="field"><label>New Password</label><input id="cp_pw" type="password" placeholder="min 6 characters"></div>
+    <div class="field"><label>Confirm New Password</label><input id="cp_pw2" type="password" placeholder="retype password"></div>
+    <div class="err" id="cp_err"></div>
+    <div class="modal-actions"><button class="btn ghost" id="cp_cancel">Cancel</button><button class="btn" id="cp_save">Update Password</button></div>
+  </div></div>`);
+  document.body.appendChild(m);
+  m.querySelector('#cp_cancel').onclick=()=>m.remove();
+  m.querySelector('#cp_save').onclick=async()=>{
+    const pw=m.querySelector('#cp_pw').value, pw2=m.querySelector('#cp_pw2').value;
+    const err=m.querySelector('#cp_err');
+    if(pw.length<6){err.textContent='Password must be at least 6 characters.';return;}
+    if(pw!==pw2){err.textContent='Passwords do not match.';return;}
+    const btn=m.querySelector('#cp_save');btn.disabled=true;
+    const {error}=await sb.auth.updateUser({password:pw});
+    btn.disabled=false;
+    if(error){err.textContent=error.message;return;}
+    m.remove();toast('Password updated.');
+  };
+}
 
 /* =======================================================================
    BOOT
