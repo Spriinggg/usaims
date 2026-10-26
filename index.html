@@ -86,6 +86,10 @@
   .muted{color:var(--muted);}
   .hint{font-size:12px;color:var(--muted);margin:4px 0 0;}
   @media(max-width:720px){nav.side{width:60px;}nav.side a span.lbl{display:none;}.kv{grid-template-columns:1fr;}}
+.pwwrap{position:relative}
+.pwwrap input{padding-right:62px!important}
+.pweye{position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;color:#c3140d;font-size:.78rem;font-weight:700;cursor:pointer;padding:4px}
+.pweye:hover{text-decoration:underline}
 </style>
 </head>
 <body>
@@ -98,7 +102,7 @@
 
     <div id="loginForm">
       <div class="field"><label>Email (Lark email)</label><input id="li_email" type="email" placeholder="name@my.uspizza.com"></div>
-      <div class="field"><label>Password</label><input id="li_pw" type="password" placeholder="••••••••"></div>
+      <div class="field"><label>Password</label><div class="pwwrap"><input id="li_pw" type="password" placeholder="••••••••"><button type="button" class="pweye" data-for="li_pw">Show</button></div></div>
       <button class="btn full" id="li_btn">Log In</button>
       <div class="err" id="li_err"></div>
       <div class="switch">No account yet? <b id="go_signup">Register as intern</b></div>
@@ -109,7 +113,7 @@
       <div class="field"><label>Matric No.</label><input id="su_matric" placeholder="e.g. A12CS1234"></div>
       <div class="field"><label>Programme</label><input id="su_prog" placeholder="Bachelor of Computer Science ..."></div>
       <div class="field"><label>Email (Lark email)</label><input id="su_email" type="email" placeholder="name@my.uspizza.com"></div>
-      <div class="field"><label>Password</label><input id="su_pw" type="password" placeholder="min 6 characters"></div>
+      <div class="field"><label>Password</label><div class="pwwrap"><input id="su_pw" type="password" placeholder="min 6 characters"><button type="button" class="pweye" data-for="su_pw">Show</button></div></div>
       <button class="btn full" id="su_btn">Create Account</button>
       <div class="err" id="su_err"></div>
       <div class="switch">Already have an account? <b id="go_login">Log in</b></div>
@@ -196,8 +200,8 @@ $('li_btn').onclick=async()=>{
 
 $('su_btn').onclick=async()=>{
   $('su_err').textContent='';
-  const name=$('su_name').value.trim(), matric=$('su_matric').value.trim(),
-        prog=$('su_prog').value.trim(), email=$('su_email').value.trim(), pw=$('su_pw').value;
+  const name=$('su_name').value.trim().toUpperCase(), matric=$('su_matric').value.trim().toUpperCase(),
+        prog=$('su_prog').value.trim().toUpperCase(), email=$('su_email').value.trim().toLowerCase(), pw=$('su_pw').value;
   if(!name||!email||!pw){$('su_err').textContent='Name, email and password are required.';return;}
   $('su_btn').disabled=true;
   const {error}=await sb.auth.signUp({email,password:pw,options:{data:{full_name:name,matric_no:matric,programme:prog}}});
@@ -211,11 +215,19 @@ $('su_btn').onclick=async()=>{
 $('logoutBtn').onclick=async()=>{await sb.auth.signOut();location.reload();};
 $('pwBtn').onclick=changePassModal;
 
+/* show/hide password — works for static fields and modal fields */
+document.addEventListener('click',e=>{
+  const b=e.target.closest('.pweye'); if(!b)return;
+  const inp=document.getElementById(b.dataset.for); if(!inp)return;
+  if(inp.type==='password'){inp.type='text';b.textContent='Hide';}
+  else{inp.type='password';b.textContent='Show';}
+});
+
 function changePassModal(){
   const m=el(`<div class="modal-bg"><div class="modal">
     <h3>Change Password</h3>
-    <div class="field"><label>New Password</label><input id="cp_pw" type="password" placeholder="min 6 characters"></div>
-    <div class="field"><label>Confirm New Password</label><input id="cp_pw2" type="password" placeholder="retype password"></div>
+    <div class="field"><label>New Password</label><div class="pwwrap"><input id="cp_pw" type="password" placeholder="min 6 characters"><button type="button" class="pweye" data-for="cp_pw">Show</button></div></div>
+    <div class="field"><label>Confirm New Password</label><div class="pwwrap"><input id="cp_pw2" type="password" placeholder="retype password"><button type="button" class="pweye" data-for="cp_pw2">Show</button></div></div>
     <div class="err" id="cp_err"></div>
     <div class="modal-actions"><button class="btn ghost" id="cp_cancel">Cancel</button><button class="btn" id="cp_save">Update Password</button></div>
   </div></div>`);
@@ -291,18 +303,13 @@ function studentDuty(){
      </div>
    </div>
    <div class="card">
-     <div class="toolbar"><b class="grow">Placement &amp; Internship Info</b><button class="btn sm" id="editDuty">Edit</button></div>
+     <div class="toolbar"><b class="grow">My Internship Info</b><button class="btn sm" id="editDuty">Edit</button></div>
      <div class="kv">
-       <div class="k">Company Name</div><div>${esc(p.company_name||'—')}</div>
-       <div class="k">Company Address</div><div>${esc(p.company_address||'—')}</div>
        <div class="k">Report on Duty</div><div>${p.report_on_duty?fmtDate(p.report_on_duty):'—'}</div>
        <div class="k">Internship Period</div><div>${p.internship_start?fmtDate(p.internship_start):'—'} to ${p.internship_end?fmtDate(p.internship_end):'—'}</div>
        <div class="k">Department</div><div>${esc((DEPTS.find(d=>d.id===p.department_id)||{}).name||'—')}</div>
-       <div class="k">Supervisor Name</div><div>${esc(p.supervisor_name||'—')}</div>
-       <div class="k">Supervisor Position</div><div>${esc(p.supervisor_position||'—')}</div>
-       <div class="k">Office Tel</div><div>${esc(p.office_tel||'—')}</div>
-       <div class="k">Mobile Tel</div><div>${esc(p.mobile_tel||'—')}</div>
-       <div class="k">Supervisor Email</div><div>${esc(p.supervisor_email||'—')}</div>
+       <div class="k">Phone Number</div><div>${esc(p.mobile_tel||'—')}</div>
+       <div class="k">Contact Email</div><div>${esc(p.supervisor_email||'—')}</div>
      </div>
    </div>`;
   $('editDuty').onclick=editDutyModal;
@@ -311,26 +318,17 @@ function studentDuty(){
 function editDutyModal(){
   const p=ME;
   const m=el(`<div class="modal-bg"><div class="modal">
-    <h3>Edit Duty Information</h3>
+    <h3>Edit My Info</h3>
     <div class="field"><label>Profile Photo</label><input type="file" id="e_photo" accept="image/*"></div>
     <div class="row">
-      <div class="field" style="flex:1;min-width:220px"><label>Company Name</label><input id="e_company" value="${esc(p.company_name||'')}"></div>
-      <div class="field" style="flex:1;min-width:220px"><label>Report on Duty</label><input type="date" id="e_rod" value="${p.report_on_duty||''}"></div>
+      <div class="field" style="flex:1;min-width:160px"><label>Report on Duty</label><input type="date" id="e_rod" value="${p.report_on_duty||''}"></div>
+      <div class="field" style="flex:1;min-width:160px"><label>Phone Number</label><input id="e_mtel" value="${esc(p.mobile_tel||'')}" placeholder="e.g. 012-3456789"></div>
     </div>
-    <div class="field"><label>Company Address</label><textarea id="e_addr" rows="2">${esc(p.company_address||'')}</textarea></div>
     <div class="row">
       <div class="field" style="flex:1;min-width:160px"><label>Internship Start</label><input type="date" id="e_start" value="${p.internship_start||''}"></div>
       <div class="field" style="flex:1;min-width:160px"><label>Internship End</label><input type="date" id="e_end" value="${p.internship_end||''}"></div>
     </div>
-    <div class="row">
-      <div class="field" style="flex:1;min-width:200px"><label>Supervisor Name</label><input id="e_svname" value="${esc(p.supervisor_name||'')}"></div>
-      <div class="field" style="flex:1;min-width:200px"><label>Supervisor Position</label><input id="e_svpos" value="${esc(p.supervisor_position||'')}"></div>
-    </div>
-    <div class="row">
-      <div class="field" style="flex:1;min-width:160px"><label>Office Tel</label><input id="e_otel" value="${esc(p.office_tel||'')}"></div>
-      <div class="field" style="flex:1;min-width:160px"><label>Mobile Tel</label><input id="e_mtel" value="${esc(p.mobile_tel||'')}"></div>
-      <div class="field" style="flex:1;min-width:200px"><label>Supervisor Email</label><input id="e_svmail" value="${esc(p.supervisor_email||'')}"></div>
-    </div>
+    <div class="field"><label>Contact Email (Gmail)</label><input id="e_svmail" type="email" value="${esc(p.supervisor_email||'')}" placeholder="name@gmail.com"></div>
     <div class="modal-actions"><button class="btn ghost" id="e_cancel">Cancel</button><button class="btn" id="e_save">Save</button></div>
   </div></div>`);
   document.body.appendChild(m);
@@ -342,14 +340,9 @@ function editDutyModal(){
     if(f){ const url=await uploadFile(f); if(url) photo=url; }
     const patch={
       photo_url:photo,
-      company_name:m.querySelector('#e_company').value.trim(),
-      company_address:m.querySelector('#e_addr').value.trim(),
       report_on_duty:m.querySelector('#e_rod').value||null,
       internship_start:m.querySelector('#e_start').value||null,
       internship_end:m.querySelector('#e_end').value||null,
-      supervisor_name:m.querySelector('#e_svname').value.trim(),
-      supervisor_position:m.querySelector('#e_svpos').value.trim(),
-      office_tel:m.querySelector('#e_otel').value.trim(),
       mobile_tel:m.querySelector('#e_mtel').value.trim(),
       supervisor_email:m.querySelector('#e_svmail').value.trim()
     };
@@ -513,10 +506,10 @@ function supStudentModal(s){
       <div><div class="meta">${esc(s.programme||'')}<br>${esc(s.matric_no||'')} · ${esc(s.email||'')}</div></div>
     </div>
     <div class="kv">
-      <div class="k">Company</div><div>${esc(s.company_name||'—')}</div>
       <div class="k">Report on Duty</div><div>${s.report_on_duty?fmtDate(s.report_on_duty):'—'}</div>
       <div class="k">Internship Period</div><div>${s.internship_start?fmtDate(s.internship_start):'—'} to ${s.internship_end?fmtDate(s.internship_end):'—'}</div>
-      <div class="k">Supervisor</div><div>${esc(s.supervisor_name||'—')} ${s.supervisor_position?'('+esc(s.supervisor_position)+')':''}</div>
+      <div class="k">Phone Number</div><div>${esc(s.mobile_tel||'—')}</div>
+      <div class="k">Contact Email</div><div>${esc(s.supervisor_email||'—')}</div>
     </div>
     <div class="field" style="margin-top:14px"><label>Assign Department</label>
       <select id="m_dept"><option value="">(No department)</option>${DEPTS.map(d=>`<option value="${d.id}" ${d.id===s.department_id?'selected':''}>${esc(d.name)}</option>`).join('')}</select>
