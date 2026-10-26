@@ -413,27 +413,40 @@ async function loadStudentWeek(weeks){
 function entryModal(dateKey,weeks){
   const e=STU_ENTRIES[dateKey]||{};
   const locked=e.status==='verified';
+  const readonly=e.status==='verified'||e.status==='submitted';   // can't edit text once submitted/verified
+  const canDelete=e.id && e.status!=='verified';                  // can delete draft / rejected / submitted (not verified)
   const m=el(`<div class="modal-bg"><div class="modal">
     <h3>Log Entry — ${fmtDate(dateKey)} (${dayName(dateKey)})</h3>
     <div class="field">
       <label>Task / Activity</label>
-      <textarea id="en_act" rows="9" maxlength="${MAX_CHARS}" ${locked?'disabled':''} placeholder="Describe what you did today...">${esc(e.activity||'')}</textarea>
+      <textarea id="en_act" rows="9" maxlength="${MAX_CHARS}" ${readonly?'disabled':''} placeholder="Describe what you did today...">${esc(e.activity||'')}</textarea>
       <div class="counter"><span id="cc">${(e.activity||'').length}</span>/${MAX_CHARS}</div>
     </div>
     <div class="field"><label>Attachment (optional)</label>
       ${e.attachment_url?`<div class="hint">Current: <a href="${esc(e.attachment_url)}" target="_blank">view file</a></div>`:''}
-      ${locked?'':`<input type="file" id="en_file">`}
+      ${readonly?'':`<input type="file" id="en_file">`}
     </div>
+    ${e.status==='submitted'?`<div class="hint">Already submitted to supervisor. To change it, delete this entry and add again.</div>`:''}
     ${e.remarks?`<div class="hint" style="color:#c3140d">Supervisor remarks: ${esc(e.remarks)}</div>`:''}
     <div class="modal-actions">
       <button class="btn ghost" id="en_cancel">Close</button>
-      ${locked?'':`<button class="btn ghost" id="en_draft">Save Draft</button><button class="btn ok" id="en_submit">Submit</button>`}
+      ${canDelete?`<button class="btn" style="background:#c3140d" id="en_delete">Delete</button>`:''}
+      ${readonly?'':`<button class="btn ghost" id="en_draft">Save Draft</button><button class="btn ok" id="en_submit">Submit</button>`}
     </div>
   </div></div>`);
   document.body.appendChild(m);
-  const ta=m.querySelector('#en_act'); if(ta) ta.oninput=()=>m.querySelector('#cc').textContent=ta.value.length;
+  const ta=m.querySelector('#en_act'); if(ta&&!readonly) ta.oninput=()=>m.querySelector('#cc').textContent=ta.value.length;
   m.querySelector('#en_cancel').onclick=()=>m.remove();
-  if(!locked){
+  const delBtn=m.querySelector('#en_delete');
+  if(delBtn){ delBtn.onclick=async()=>{
+    if(!confirm('Delete this log entry? This cannot be undone.'))return;
+    const btns=m.querySelectorAll('button');btns.forEach(b=>b.disabled=true);
+    const {error}=await sb.from('logbook_entries').delete().eq('id',e.id);
+    btns.forEach(b=>b.disabled=false);
+    if(error){toast(error.message);return;}
+    m.remove();toast('Entry deleted.');loadStudentWeek(weeks);
+  };}
+  if(!readonly){
     const save=async(status)=>{
       const btns=m.querySelectorAll('button');btns.forEach(b=>b.disabled=true);
       let url=e.attachment_url||null;
