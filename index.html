@@ -178,6 +178,8 @@ const $ = (id)=>document.getElementById(id);
 const el = (html)=>{const t=document.createElement('template');t.innerHTML=html.trim();return t.content.firstChild;};
 function toast(m){const t=$('toast');t.textContent=m;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2200);}
 function esc(s){return (s==null?'':String(s)).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
+function titleCase(s){return (s==null?'':String(s)).toLowerCase().replace(/([a-z])([a-z]*)/g,(m,a,b)=>a.toUpperCase()+b);}
+function escProg(s){return esc(titleCase(s));}  // programme shown in Title Case
 function fmtDate(d){const x=new Date(d);return x.toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'});}
 function dayName(d){return new Date(d).toLocaleDateString('en-GB',{weekday:'short'});}
 function iso(d){return new Date(d).toISOString().slice(0,10);}
@@ -216,7 +218,7 @@ $('li_btn').onclick=async()=>{
 $('su_btn').onclick=async()=>{
   $('su_err').textContent='';
   const name=$('su_name').value.trim().toUpperCase(), matric=$('su_matric').value.trim().toUpperCase(),
-        prog=$('su_prog').value.trim().toUpperCase(), email=$('su_email').value.trim().toLowerCase(), pw=$('su_pw').value;
+        prog=titleCase($('su_prog').value.trim()), email=$('su_email').value.trim().toLowerCase(), pw=$('su_pw').value;
   if(!name||!email||!pw){$('su_err').textContent='Name, email and password are required.';return;}
   $('su_btn').disabled=true;
   const {error}=await sb.auth.signUp({email,password:pw,options:{data:{full_name:name,matric_no:matric,programme:prog}}});
@@ -311,7 +313,7 @@ function studentDuty(){
        ${p.photo_url?`<img src="${esc(p.photo_url)}">`:`<div class="ph">👤</div>`}
        <div>
          <h2>${esc(p.full_name||'(name)')}</h2>
-         <div class="meta">${esc(p.programme||'')}<br>${esc(p.matric_no||'')} &nbsp;·&nbsp; ${esc(p.email||'')}</div>
+         <div class="meta">${escProg(p.programme||'')}<br>${esc(p.matric_no||'')} &nbsp;·&nbsp; ${esc(p.email||'')}</div>
        </div>
        <div style="flex:1"></div>
        <div>${p.duty_verified?'<span class="status s-verified">Duty Verified</span>':'<span class="status s-submitted">Not verified</span>'}</div>
@@ -337,6 +339,11 @@ function editDutyModal(){
   const m=el(`<div class="modal-bg"><div class="modal">
     <h3>Edit My Info</h3>
     <div class="field"><label>Profile Photo</label><input type="file" id="e_photo" accept="image/*"></div>
+    <div class="row">
+      <div class="field" style="flex:1;min-width:220px"><label>Full Name</label><input id="e_name" value="${esc(p.full_name||'')}" placeholder="Full name (as per IC)"></div>
+      <div class="field" style="flex:1;min-width:150px"><label>Matric No.</label><input id="e_matric" value="${esc(p.matric_no||'')}" placeholder="e.g. A12CS1234"></div>
+    </div>
+    <div class="field"><label>Programme / Course</label><input id="e_prog" value="${esc(p.programme||'')}" placeholder="e.g. Bachelor of Computer Science"></div>
     <div class="field"><label>University</label><input id="e_company" value="${esc(p.company_name||'')}" placeholder="e.g. Universiti Teknologi Malaysia"></div>
     <div class="field"><label>University Address</label><textarea id="e_addr" rows="2" placeholder="Full university address">${esc(p.company_address||'')}</textarea></div>
     <div class="row">
@@ -359,6 +366,9 @@ function editDutyModal(){
     if(f){ const url=await uploadFile(f); if(url) photo=url; }
     const patch={
       photo_url:photo,
+      full_name:m.querySelector('#e_name').value.trim().toUpperCase(),
+      matric_no:m.querySelector('#e_matric').value.trim().toUpperCase(),
+      programme:titleCase(m.querySelector('#e_prog').value.trim()),
       company_name:m.querySelector('#e_company').value.trim(),
       company_address:m.querySelector('#e_addr').value.trim(),
       report_on_duty:m.querySelector('#e_rod').value||null,
@@ -370,7 +380,9 @@ function editDutyModal(){
     const {error}=await sb.from('profiles').update(patch).eq('id',p.id);
     btn.disabled=false;
     if(error){toast(error.message);return;}
-    Object.assign(ME,patch);m.remove();toast('Saved.');studentDuty();
+    Object.assign(ME,patch);m.remove();toast('Saved.');
+    $('whoName').innerHTML=esc(ME.full_name||ME.email)+'<small>'+(ME.role==='supervisor'?'Supervisor':'Intern')+'</small>';
+    studentDuty();
   };
 }
 
@@ -523,7 +535,7 @@ function drawStudents(){
     const dn=(DEPTS.find(d=>d.id===s.department_id)||{}).name||'<span class="muted">—</span>';
     const tr=el(`<tr>
       <td><b>${esc(s.full_name||'—')}</b><br><span class="muted">${esc(s.email||'')}</span></td>
-      <td>${esc(s.matric_no||'—')}</td><td>${esc(s.programme||'—')}</td>
+      <td>${esc(s.matric_no||'—')}</td><td>${s.programme?escProg(s.programme):'—'}</td>
       <td>${dn}</td>
       <td>${s.duty_verified?'<span class="status s-verified">Verified</span>':'<span class="status s-submitted">Pending</span>'}</td>
       <td></td></tr>`);
@@ -537,7 +549,7 @@ function supStudentModal(s){
     <h3>${esc(s.full_name||'Student')}</h3>
     <div class="pcard" style="margin-bottom:12px">
       ${s.photo_url?`<img src="${esc(s.photo_url)}">`:`<div class="ph">👤</div>`}
-      <div><div class="meta">${esc(s.programme||'')}<br>${esc(s.matric_no||'')} · ${esc(s.email||'')}</div></div>
+      <div><div class="meta">${escProg(s.programme||'')}<br>${esc(s.matric_no||'')} · ${esc(s.email||'')}</div></div>
     </div>
     <div class="kv">
       <div class="k">University</div><div>${esc(s.company_name||'—')}</div>
