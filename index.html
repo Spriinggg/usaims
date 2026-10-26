@@ -1,0 +1,641 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>UsAims — US Pizza Intern Log Book</title>
+<style>
+  :root{
+    --red:#c3140d; --orange:#f39200; --ink:#24303f; --muted:#6b7684;
+    --line:#e6e9ef; --bg:#eef1f6; --card:#ffffff; --ok:#1a7f37; --no:#c3140d;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;font-family:"Segoe UI",Roboto,Arial,sans-serif;background:var(--bg);color:var(--ink);font-size:14px;}
+  button{font-family:inherit;cursor:pointer;}
+  .hidden{display:none!important;}
+  a{color:var(--red);}
+
+  /* ---------- Login ---------- */
+  #login{min-height:100vh;display:flex;align-items:center;justify-content:center;
+    background:linear-gradient(135deg,var(--red),var(--orange));padding:16px;}
+  .login-card{background:#fff;border-radius:14px;padding:30px 26px;width:100%;max-width:380px;box-shadow:0 20px 50px rgba(0,0,0,.25);}
+  .login-card h1{margin:0 0 4px;font-size:20px;color:var(--red);}
+  .login-card p.sub{margin:0 0 18px;color:var(--muted);font-size:12.5px;}
+  .field{margin-bottom:12px;}
+  .field label{display:block;font-size:12px;color:var(--muted);margin-bottom:4px;}
+  .field input,.field select,.field textarea{width:100%;padding:9px 11px;border:1px solid var(--line);border-radius:8px;font-size:14px;font-family:inherit;}
+  .field textarea{resize:vertical;}
+  .btn{background:var(--red);color:#fff;border:none;border-radius:8px;padding:10px 16px;font-size:14px;font-weight:600;}
+  .btn:hover{opacity:.92;}
+  .btn.full{width:100%;}
+  .btn.ghost{background:#fff;color:var(--red);border:1px solid var(--red);}
+  .btn.ok{background:var(--ok);}
+  .btn.sm{padding:5px 10px;font-size:12.5px;}
+  .btn.icon{padding:5px 9px;border-radius:6px;}
+  .err{color:var(--no);font-size:12.5px;margin-top:8px;min-height:16px;}
+  .switch{margin-top:14px;text-align:center;font-size:12.5px;color:var(--muted);}
+  .switch b{color:var(--red);cursor:pointer;}
+
+  /* ---------- Shell ---------- */
+  header.top{background:linear-gradient(90deg,var(--red),var(--orange));color:#fff;padding:12px 18px;display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:20;}
+  header.top .logo{font-weight:800;font-size:16px;letter-spacing:.3px;}
+  header.top .sess{font-size:11.5px;opacity:.9;}
+  header.top .spacer{flex:1;}
+  header.top .who{font-size:13px;font-weight:600;text-align:right;line-height:1.2;}
+  header.top .who small{display:block;font-weight:400;opacity:.85;font-size:11px;}
+  .layout{display:flex;min-height:calc(100vh - 46px);}
+  nav.side{width:210px;background:#fff;border-right:1px solid var(--line);padding:12px 0;flex-shrink:0;}
+  nav.side a{display:flex;align-items:center;gap:9px;padding:11px 18px;color:var(--ink);text-decoration:none;font-size:13.5px;border-left:3px solid transparent;}
+  nav.side a:hover{background:#faf3f2;}
+  nav.side a.active{background:#fdeceb;border-left-color:var(--red);color:var(--red);font-weight:600;}
+  nav.side .ico{width:18px;text-align:center;}
+  main.content{flex:1;padding:20px;min-width:0;}
+  .page-title{font-size:16px;color:var(--red);margin:0 0 14px;font-weight:700;}
+
+  .card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:18px;margin-bottom:16px;}
+  .row{display:flex;gap:14px;flex-wrap:wrap;}
+  .toolbar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:12px;}
+  .toolbar .grow{flex:1;}
+
+  table{width:100%;border-collapse:collapse;font-size:13px;}
+  th,td{border-bottom:1px solid var(--line);padding:9px 10px;text-align:left;vertical-align:top;}
+  th{background:#faf3f2;color:#8a1510;font-weight:600;font-size:12px;}
+  tr:hover td{background:#fcfcfd;}
+  .status{display:inline-block;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:600;}
+  .s-draft{background:#eceff3;color:#5a6472;}
+  .s-submitted{background:#fde8cf;color:#9a5b00;}
+  .s-verified{background:#dff3e4;color:#1a7f37;}
+  .s-rejected{background:#fbdad7;color:#c3140d;}
+
+  /* profile card */
+  .pcard{display:flex;gap:18px;align-items:center;flex-wrap:wrap;}
+  .pcard img,.pcard .ph{width:92px;height:92px;border-radius:10px;object-fit:cover;background:#eef1f6;display:flex;align-items:center;justify-content:center;color:#b6bdc8;font-size:30px;border:1px solid var(--line);}
+  .pcard h2{margin:0 0 3px;font-size:17px;}
+  .pcard .meta{color:var(--muted);font-size:12.5px;line-height:1.5;}
+  .kv{display:grid;grid-template-columns:170px 1fr;gap:6px 12px;font-size:13px;margin-top:8px;}
+  .kv .k{color:var(--muted);}
+
+  /* modal */
+  .modal-bg{position:fixed;inset:0;background:rgba(20,25,35,.5);display:flex;align-items:flex-start;justify-content:center;padding:30px 16px;z-index:50;overflow:auto;}
+  .modal{background:#fff;border-radius:12px;max-width:640px;width:100%;padding:20px;}
+  .modal h3{margin:0 0 12px;color:var(--red);font-size:16px;}
+  .counter{font-size:11px;color:var(--muted);text-align:right;margin-top:3px;}
+  .modal-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:14px;}
+  .toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--ink);color:#fff;padding:10px 18px;border-radius:8px;font-size:13px;z-index:80;opacity:0;transition:opacity .2s;}
+  .toast.show{opacity:1;}
+  .muted{color:var(--muted);}
+  .hint{font-size:12px;color:var(--muted);margin:4px 0 0;}
+  @media(max-width:720px){nav.side{width:60px;}nav.side a span.lbl{display:none;}.kv{grid-template-columns:1fr;}}
+</style>
+</head>
+<body>
+
+<!-- ================= LOGIN ================= -->
+<div id="login">
+  <div class="login-card">
+    <h1>UsAims</h1>
+    <p class="sub">US Pizza Internship Logbook System</p>
+
+    <div id="loginForm">
+      <div class="field"><label>Email (Lark email)</label><input id="li_email" type="email" placeholder="name@my.uspizza.com"></div>
+      <div class="field"><label>Password</label><input id="li_pw" type="password" placeholder="••••••••"></div>
+      <button class="btn full" id="li_btn">Log In</button>
+      <div class="err" id="li_err"></div>
+      <div class="switch">No account yet? <b id="go_signup">Register as intern</b></div>
+    </div>
+
+    <div id="signupForm" class="hidden">
+      <div class="field"><label>Full Name</label><input id="su_name" placeholder="AMIRUL AFIQ AHMAD HISHAM"></div>
+      <div class="field"><label>Matric No.</label><input id="su_matric" placeholder="B24CS0007"></div>
+      <div class="field"><label>Programme</label><input id="su_prog" placeholder="Bachelor of Computer Science ..."></div>
+      <div class="field"><label>Email (Lark email)</label><input id="su_email" type="email" placeholder="name@my.uspizza.com"></div>
+      <div class="field"><label>Password</label><input id="su_pw" type="password" placeholder="min 6 characters"></div>
+      <button class="btn full" id="su_btn">Create Account</button>
+      <div class="err" id="su_err"></div>
+      <div class="switch">Already have an account? <b id="go_login">Log in</b></div>
+    </div>
+  </div>
+</div>
+
+<!-- ================= APP SHELL ================= -->
+<div id="app" class="hidden">
+  <header class="top">
+    <div class="logo">UsAims</div>
+    <div class="sess">US Pizza Internship<br><span id="sessText">Logbook System</span></div>
+    <div class="spacer"></div>
+    <div class="who" id="whoName">—</div>
+    <button class="btn sm ghost" id="logoutBtn" style="background:rgba(255,255,255,.15);color:#fff;border-color:rgba(255,255,255,.5)">Log out</button>
+  </header>
+  <div class="layout">
+    <nav class="side" id="sidebar"></nav>
+    <main class="content" id="view"></main>
+  </div>
+</div>
+
+<div id="toast" class="toast"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<script>
+/* =======================================================================
+   CONFIG  —  paste your NEW Supabase project URL + anon key here
+   (Supabase dashboard → Project Settings → API)
+   ======================================================================= */
+const CONFIG = {
+  url: "https://llophlfkkyunjoldxajc.supabase.co",
+  key: "sb_publishable_IsRzt4DqWqF6IsK-TfF24w_ALn4n6dp"
+};
+/* ======================================================================= */
+
+const sb = window.supabase.createClient(CONFIG.url, CONFIG.key);
+const DEFAULT_START = "2026-09-21";   // fallback internship start if a student's start date is empty
+const MAX_CHARS = 5000;
+
+let ME = null;        // my profile row
+let DEPTS = [];       // departments cache
+
+/* ---------- small helpers ---------- */
+const $ = (id)=>document.getElementById(id);
+const el = (html)=>{const t=document.createElement('template');t.innerHTML=html.trim();return t.content.firstChild;};
+function toast(m){const t=$('toast');t.textContent=m;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2200);}
+function esc(s){return (s==null?'':String(s)).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
+function fmtDate(d){const x=new Date(d);return x.toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'});}
+function dayName(d){return new Date(d).toLocaleDateString('en-GB',{weekday:'short'});}
+function iso(d){return new Date(d).toISOString().slice(0,10);}
+
+/* week ranges (Mon–Sun) from start..end */
+function mondayOf(d){const x=new Date(d);const g=(x.getDay()+6)%7;x.setDate(x.getDate()-g);x.setHours(0,0,0,0);return x;}
+function buildWeeks(start,end){
+  const s=mondayOf(start||DEFAULT_START);
+  const e=end?new Date(end):new Date(new Date(s).setDate(s.getDate()+20*7));
+  const weeks=[];let cur=new Date(s);let n=1;
+  while(cur<=e && n<=40){
+    const ws=new Date(cur), we=new Date(cur);we.setDate(we.getDate()+6);
+    weeks.push({n,start:new Date(ws),end:new Date(we)});
+    cur.setDate(cur.getDate()+7);n++;
+  }
+  return weeks;
+}
+
+/* =======================================================================
+   AUTH
+   ======================================================================= */
+$('go_signup').onclick=()=>{$('loginForm').classList.add('hidden');$('signupForm').classList.remove('hidden');};
+$('go_login').onclick =()=>{$('signupForm').classList.add('hidden');$('loginForm').classList.remove('hidden');};
+
+$('li_btn').onclick=async()=>{
+  $('li_err').textContent='';
+  const email=$('li_email').value.trim(), pw=$('li_pw').value;
+  if(!email||!pw){$('li_err').textContent='Please fill in email and password.';return;}
+  $('li_btn').disabled=true;
+  const {error}=await sb.auth.signInWithPassword({email,password:pw});
+  $('li_btn').disabled=false;
+  if(error){$('li_err').textContent=error.message;return;}
+  boot();
+};
+
+$('su_btn').onclick=async()=>{
+  $('su_err').textContent='';
+  const name=$('su_name').value.trim(), matric=$('su_matric').value.trim(),
+        prog=$('su_prog').value.trim(), email=$('su_email').value.trim(), pw=$('su_pw').value;
+  if(!name||!email||!pw){$('su_err').textContent='Name, email and password are required.';return;}
+  $('su_btn').disabled=true;
+  const {error}=await sb.auth.signUp({email,password:pw,options:{data:{full_name:name,matric_no:matric,programme:prog}}});
+  $('su_btn').disabled=false;
+  if(error){$('su_err').textContent=error.message;return;}
+  toast('Account created. You can log in now.');
+  $('go_login').onclick();
+  $('li_email').value=email;
+};
+
+$('logoutBtn').onclick=async()=>{await sb.auth.signOut();location.reload();};
+
+/* =======================================================================
+   BOOT
+   ======================================================================= */
+async function boot(){
+  const {data:{user}}=await sb.auth.getUser();
+  if(!user){$('login').classList.remove('hidden');$('app').classList.add('hidden');return;}
+  // load my profile (retry once in case the signup trigger is still creating it)
+  let {data:prof}=await sb.from('profiles').select('*').eq('id',user.id).maybeSingle();
+  if(!prof){ await new Promise(r=>setTimeout(r,600));
+    ({data:prof}=await sb.from('profiles').select('*').eq('id',user.id).maybeSingle()); }
+  if(!prof){ // fallback insert
+    await sb.from('profiles').insert({id:user.id});
+    ({data:prof}=await sb.from('profiles').select('*').eq('id',user.id).maybeSingle());
+  }
+  ME=prof; ME.email=user.email;
+  await loadDepts();
+  $('login').classList.add('hidden');$('app').classList.remove('hidden');
+  $('whoName').innerHTML=esc(ME.full_name||ME.email)+'<small>'+(ME.role==='supervisor'?'Supervisor':'Intern')+'</small>';
+  if(ME.role==='supervisor') renderSupervisor(); else renderStudent();
+}
+
+async function loadDepts(){
+  const {data}=await sb.from('departments').select('*').order('name');
+  DEPTS=data||[];
+}
+
+/* =======================================================================
+   STUDENT UI
+   ======================================================================= */
+function renderStudent(){
+  $('sidebar').innerHTML='';
+  const items=[['duty','🪪','Duty Info'],['log','📒','Log Book']];
+  items.forEach(([k,ic,lbl])=>{
+    const a=el(`<a data-k="${k}"><span class="ico">${ic}</span><span class="lbl">${lbl}</span></a>`);
+    a.onclick=()=>{setActive(k);k==='duty'?studentDuty():studentLog();};
+    $('sidebar').appendChild(a);
+  });
+  setActive('duty');studentDuty();
+}
+function setActive(k){document.querySelectorAll('nav.side a').forEach(a=>a.classList.toggle('active',a.dataset.k===k));}
+
+function studentDuty(){
+  const p=ME;
+  $('view').innerHTML=`
+   <h1 class="page-title">Duty Information</h1>
+   <div class="card">
+     <div class="pcard">
+       ${p.photo_url?`<img src="${esc(p.photo_url)}">`:`<div class="ph">👤</div>`}
+       <div>
+         <h2>${esc(p.full_name||'(name)')}</h2>
+         <div class="meta">${esc(p.programme||'')}<br>${esc(p.matric_no||'')} &nbsp;·&nbsp; ${esc(p.email||'')}</div>
+       </div>
+       <div style="flex:1"></div>
+       <div>${p.duty_verified?'<span class="status s-verified">Duty Verified</span>':'<span class="status s-submitted">Not verified</span>'}</div>
+     </div>
+   </div>
+   <div class="card">
+     <div class="toolbar"><b class="grow">Placement &amp; Internship Info</b><button class="btn sm" id="editDuty">Edit</button></div>
+     <div class="kv">
+       <div class="k">Company Name</div><div>${esc(p.company_name||'—')}</div>
+       <div class="k">Company Address</div><div>${esc(p.company_address||'—')}</div>
+       <div class="k">Report on Duty</div><div>${p.report_on_duty?fmtDate(p.report_on_duty):'—'}</div>
+       <div class="k">Internship Period</div><div>${p.internship_start?fmtDate(p.internship_start):'—'} to ${p.internship_end?fmtDate(p.internship_end):'—'}</div>
+       <div class="k">Department</div><div>${esc((DEPTS.find(d=>d.id===p.department_id)||{}).name||'—')}</div>
+       <div class="k">Supervisor Name</div><div>${esc(p.supervisor_name||'—')}</div>
+       <div class="k">Supervisor Position</div><div>${esc(p.supervisor_position||'—')}</div>
+       <div class="k">Office Tel</div><div>${esc(p.office_tel||'—')}</div>
+       <div class="k">Mobile Tel</div><div>${esc(p.mobile_tel||'—')}</div>
+       <div class="k">Supervisor Email</div><div>${esc(p.supervisor_email||'—')}</div>
+     </div>
+   </div>`;
+  $('editDuty').onclick=editDutyModal;
+}
+
+function editDutyModal(){
+  const p=ME;
+  const m=el(`<div class="modal-bg"><div class="modal">
+    <h3>Edit Duty Information</h3>
+    <div class="field"><label>Profile Photo</label><input type="file" id="e_photo" accept="image/*"></div>
+    <div class="row">
+      <div class="field" style="flex:1;min-width:220px"><label>Company Name</label><input id="e_company" value="${esc(p.company_name||'')}"></div>
+      <div class="field" style="flex:1;min-width:220px"><label>Report on Duty</label><input type="date" id="e_rod" value="${p.report_on_duty||''}"></div>
+    </div>
+    <div class="field"><label>Company Address</label><textarea id="e_addr" rows="2">${esc(p.company_address||'')}</textarea></div>
+    <div class="row">
+      <div class="field" style="flex:1;min-width:160px"><label>Internship Start</label><input type="date" id="e_start" value="${p.internship_start||''}"></div>
+      <div class="field" style="flex:1;min-width:160px"><label>Internship End</label><input type="date" id="e_end" value="${p.internship_end||''}"></div>
+    </div>
+    <div class="row">
+      <div class="field" style="flex:1;min-width:200px"><label>Supervisor Name</label><input id="e_svname" value="${esc(p.supervisor_name||'')}"></div>
+      <div class="field" style="flex:1;min-width:200px"><label>Supervisor Position</label><input id="e_svpos" value="${esc(p.supervisor_position||'')}"></div>
+    </div>
+    <div class="row">
+      <div class="field" style="flex:1;min-width:160px"><label>Office Tel</label><input id="e_otel" value="${esc(p.office_tel||'')}"></div>
+      <div class="field" style="flex:1;min-width:160px"><label>Mobile Tel</label><input id="e_mtel" value="${esc(p.mobile_tel||'')}"></div>
+      <div class="field" style="flex:1;min-width:200px"><label>Supervisor Email</label><input id="e_svmail" value="${esc(p.supervisor_email||'')}"></div>
+    </div>
+    <div class="modal-actions"><button class="btn ghost" id="e_cancel">Cancel</button><button class="btn" id="e_save">Save</button></div>
+  </div></div>`);
+  document.body.appendChild(m);
+  m.querySelector('#e_cancel').onclick=()=>m.remove();
+  m.querySelector('#e_save').onclick=async()=>{
+    const btn=m.querySelector('#e_save');btn.disabled=true;
+    let photo=p.photo_url;
+    const f=m.querySelector('#e_photo').files[0];
+    if(f){ const url=await uploadFile(f); if(url) photo=url; }
+    const patch={
+      photo_url:photo,
+      company_name:m.querySelector('#e_company').value.trim(),
+      company_address:m.querySelector('#e_addr').value.trim(),
+      report_on_duty:m.querySelector('#e_rod').value||null,
+      internship_start:m.querySelector('#e_start').value||null,
+      internship_end:m.querySelector('#e_end').value||null,
+      supervisor_name:m.querySelector('#e_svname').value.trim(),
+      supervisor_position:m.querySelector('#e_svpos').value.trim(),
+      office_tel:m.querySelector('#e_otel').value.trim(),
+      mobile_tel:m.querySelector('#e_mtel').value.trim(),
+      supervisor_email:m.querySelector('#e_svmail').value.trim()
+    };
+    const {error}=await sb.from('profiles').update(patch).eq('id',p.id);
+    btn.disabled=false;
+    if(error){toast(error.message);return;}
+    Object.assign(ME,patch);m.remove();toast('Saved.');studentDuty();
+  };
+}
+
+async function uploadFile(f){
+  const path=`${ME.id}/${Date.now()}_${f.name.replace(/[^a-zA-Z0-9._-]/g,'_')}`;
+  const {error}=await sb.storage.from('uploads').upload(path,f,{upsert:true});
+  if(error){toast('Upload failed: '+error.message);return null;}
+  return sb.storage.from('uploads').getPublicUrl(path).data.publicUrl;
+}
+
+let STU_WEEK=null, STU_ENTRIES={};
+async function studentLog(){
+  const weeks=buildWeeks(ME.internship_start,ME.internship_end);
+  if(STU_WEEK===null){ // default to current week if within range else week 1
+    const today=new Date();STU_WEEK=weeks.findIndex(w=>today>=w.start&&today<=w.end);if(STU_WEEK<0)STU_WEEK=0;
+  }
+  $('view').innerHTML=`
+   <h1 class="page-title">Log Book</h1>
+   <div class="card">
+     <div class="toolbar">
+       <label class="muted">Week</label>
+       <select id="wk">${weeks.map((w,i)=>`<option value="${i}" ${i===STU_WEEK?'selected':''}>WEEK ${w.n} : ${fmtDate(w.start)} - ${fmtDate(w.end)}</option>`).join('')}</select>
+     </div>
+     <table><thead><tr><th>Date / Day</th><th>Log / Activity</th><th>Last Updated</th><th>Status</th><th>Action</th></tr></thead>
+     <tbody id="logRows"></tbody></table>
+   </div>`;
+  $('wk').onchange=e=>{STU_WEEK=+e.target.value;loadStudentWeek(weeks);};
+  loadStudentWeek(weeks);
+}
+async function loadStudentWeek(weeks){
+  const w=weeks[STU_WEEK];
+  const {data}=await sb.from('logbook_entries').select('*')
+    .eq('student_id',ME.id).gte('entry_date',iso(w.start)).lte('entry_date',iso(w.end));
+  STU_ENTRIES={};(data||[]).forEach(r=>STU_ENTRIES[r.entry_date]=r);
+  const rows=$('logRows');rows.innerHTML='';
+  for(let i=0;i<7;i++){
+    const d=new Date(w.start);d.setDate(d.getDate()+i);const key=iso(d);
+    const e=STU_ENTRIES[key];
+    const act=e?.activity?esc(e.activity.slice(0,70))+(e.activity.length>70?'…':''):'<span class="muted">N/A</span>';
+    const st=e?`<span class="status s-${e.status}">${e.status}</span>`:'<span class="muted">—</span>';
+    const canEdit=!e || e.status!=='verified';
+    const tr=el(`<tr>
+      <td><b>${fmtDate(d)}</b><br><span class="muted">${dayName(d)}</span></td>
+      <td>${act}${e?.remarks?`<br><span class="muted" style="color:#c3140d">Remarks: ${esc(e.remarks)}</span>`:''}</td>
+      <td>${e?fmtDate(e.updated_at):'<span class="muted">—</span>'}</td>
+      <td>${st}</td>
+      <td></td></tr>`);
+    const act_td=tr.lastElementChild;
+    const b=el(`<button class="btn sm ${e?'ghost':''}">${e?(canEdit?'Edit':'View'):'+ Add'}</button>`);
+    b.onclick=()=>entryModal(key,weeks);act_td.appendChild(b);
+    rows.appendChild(tr);
+  }
+}
+
+function entryModal(dateKey,weeks){
+  const e=STU_ENTRIES[dateKey]||{};
+  const locked=e.status==='verified';
+  const m=el(`<div class="modal-bg"><div class="modal">
+    <h3>Log Entry — ${fmtDate(dateKey)} (${dayName(dateKey)})</h3>
+    <div class="field">
+      <label>Task / Activity</label>
+      <textarea id="en_act" rows="9" maxlength="${MAX_CHARS}" ${locked?'disabled':''} placeholder="Describe what you did today...">${esc(e.activity||'')}</textarea>
+      <div class="counter"><span id="cc">${(e.activity||'').length}</span>/${MAX_CHARS}</div>
+    </div>
+    <div class="field"><label>Attachment (optional)</label>
+      ${e.attachment_url?`<div class="hint">Current: <a href="${esc(e.attachment_url)}" target="_blank">view file</a></div>`:''}
+      ${locked?'':`<input type="file" id="en_file">`}
+    </div>
+    ${e.remarks?`<div class="hint" style="color:#c3140d">Supervisor remarks: ${esc(e.remarks)}</div>`:''}
+    <div class="modal-actions">
+      <button class="btn ghost" id="en_cancel">Close</button>
+      ${locked?'':`<button class="btn ghost" id="en_draft">Save Draft</button><button class="btn ok" id="en_submit">Submit</button>`}
+    </div>
+  </div></div>`);
+  document.body.appendChild(m);
+  const ta=m.querySelector('#en_act'); if(ta) ta.oninput=()=>m.querySelector('#cc').textContent=ta.value.length;
+  m.querySelector('#en_cancel').onclick=()=>m.remove();
+  if(!locked){
+    const save=async(status)=>{
+      const btns=m.querySelectorAll('button');btns.forEach(b=>b.disabled=true);
+      let url=e.attachment_url||null;
+      const f=m.querySelector('#en_file')?.files[0];
+      if(f){const u=await uploadFile(f);if(u)url=u;}
+      const payload={student_id:ME.id,entry_date:dateKey,activity:ta.value,attachment_url:url,status,updated_at:new Date().toISOString()};
+      const {error}=await sb.from('logbook_entries').upsert(payload,{onConflict:'student_id,entry_date'});
+      btns.forEach(b=>b.disabled=false);
+      if(error){toast(error.message);return;}
+      m.remove();toast(status==='submitted'?'Submitted to supervisor.':'Draft saved.');
+      loadStudentWeek(weeks);
+    };
+    m.querySelector('#en_draft').onclick=()=>save('draft');
+    m.querySelector('#en_submit').onclick=()=>{if(!ta.value.trim()){toast('Please write the activity first.');return;}save('submitted');};
+  }
+}
+
+/* =======================================================================
+   SUPERVISOR UI
+   ======================================================================= */
+function renderSupervisor(){
+  $('sidebar').innerHTML='';
+  const items=[['students','🎓','Students'],['logverify','✅','Log Book Verify'],['depts','🏷️','Departments']];
+  items.forEach(([k,ic,lbl])=>{
+    const a=el(`<a data-k="${k}"><span class="ico">${ic}</span><span class="lbl">${lbl}</span></a>`);
+    a.onclick=()=>{setActive(k);k==='students'?supStudents():k==='logverify'?supLogVerify():supDepts();};
+    $('sidebar').appendChild(a);
+  });
+  setActive('students');supStudents();
+}
+
+let SUP_STUDENTS=[];
+async function supStudents(){
+  $('view').innerHTML=`<h1 class="page-title">Students</h1>
+    <div class="card">
+      <div class="toolbar">
+        <select id="fDept"><option value="">All departments</option>${DEPTS.map(d=>`<option value="${d.id}">${esc(d.name)}</option>`).join('')}<option value="none">(No department)</option></select>
+        <input class="grow" id="fSearch" placeholder="Search name / matric..." style="padding:8px 11px;border:1px solid var(--line);border-radius:8px">
+      </div>
+      <table><thead><tr><th>Name</th><th>Matric</th><th>Programme</th><th>Department</th><th>Duty</th><th>Action</th></tr></thead>
+      <tbody id="stuRows"><tr><td colspan="6" class="muted">Loading...</td></tr></tbody></table>
+    </div>`;
+  const {data}=await sb.from('profiles').select('*').eq('role','student').order('full_name');
+  SUP_STUDENTS=data||[];
+  $('fDept').onchange=drawStudents;$('fSearch').oninput=drawStudents;
+  drawStudents();
+}
+function drawStudents(){
+  const dept=$('fDept').value, q=($('fSearch').value||'').toLowerCase();
+  const rows=$('stuRows');rows.innerHTML='';
+  const list=SUP_STUDENTS.filter(s=>{
+    if(dept==='none'&&s.department_id)return false;
+    if(dept&&dept!=='none'&&s.department_id!==dept)return false;
+    if(q&&!((s.full_name||'').toLowerCase().includes(q)||(s.matric_no||'').toLowerCase().includes(q)))return false;
+    return true;
+  });
+  if(!list.length){rows.innerHTML='<tr><td colspan="6" class="muted">No students.</td></tr>';return;}
+  list.forEach(s=>{
+    const dn=(DEPTS.find(d=>d.id===s.department_id)||{}).name||'<span class="muted">—</span>';
+    const tr=el(`<tr>
+      <td><b>${esc(s.full_name||'—')}</b><br><span class="muted">${esc(s.email||'')}</span></td>
+      <td>${esc(s.matric_no||'—')}</td><td>${esc(s.programme||'—')}</td>
+      <td>${dn}</td>
+      <td>${s.duty_verified?'<span class="status s-verified">Verified</span>':'<span class="status s-submitted">Pending</span>'}</td>
+      <td></td></tr>`);
+    const b=el('<button class="btn sm">View</button>');b.onclick=()=>supStudentModal(s);
+    tr.lastElementChild.appendChild(b);rows.appendChild(tr);
+  });
+}
+
+function supStudentModal(s){
+  const m=el(`<div class="modal-bg"><div class="modal">
+    <h3>${esc(s.full_name||'Student')}</h3>
+    <div class="pcard" style="margin-bottom:12px">
+      ${s.photo_url?`<img src="${esc(s.photo_url)}">`:`<div class="ph">👤</div>`}
+      <div><div class="meta">${esc(s.programme||'')}<br>${esc(s.matric_no||'')} · ${esc(s.email||'')}</div></div>
+    </div>
+    <div class="kv">
+      <div class="k">Company</div><div>${esc(s.company_name||'—')}</div>
+      <div class="k">Report on Duty</div><div>${s.report_on_duty?fmtDate(s.report_on_duty):'—'}</div>
+      <div class="k">Internship Period</div><div>${s.internship_start?fmtDate(s.internship_start):'—'} to ${s.internship_end?fmtDate(s.internship_end):'—'}</div>
+      <div class="k">Supervisor</div><div>${esc(s.supervisor_name||'—')} ${s.supervisor_position?'('+esc(s.supervisor_position)+')':''}</div>
+    </div>
+    <div class="field" style="margin-top:14px"><label>Assign Department</label>
+      <select id="m_dept"><option value="">(No department)</option>${DEPTS.map(d=>`<option value="${d.id}" ${d.id===s.department_id?'selected':''}>${esc(d.name)}</option>`).join('')}</select>
+    </div>
+    <div class="modal-actions">
+      <button class="btn ghost" id="m_close">Close</button>
+      <button class="btn ${s.duty_verified?'ghost':'ok'}" id="m_duty">${s.duty_verified?'Unverify Duty':'Verify Duty'}</button>
+      <button class="btn" id="m_savedept">Save Department</button>
+    </div>
+  </div></div>`);
+  document.body.appendChild(m);
+  m.querySelector('#m_close').onclick=()=>m.remove();
+  m.querySelector('#m_savedept').onclick=async()=>{
+    const did=m.querySelector('#m_dept').value||null;
+    const {error}=await sb.from('profiles').update({department_id:did}).eq('id',s.id);
+    if(error){toast(error.message);return;}
+    s.department_id=did;toast('Department updated.');drawStudents();
+  };
+  m.querySelector('#m_duty').onclick=async()=>{
+    const nv=!s.duty_verified;
+    const {error}=await sb.from('profiles').update({duty_verified:nv,duty_verified_at:nv?new Date().toISOString():null}).eq('id',s.id);
+    if(error){toast(error.message);return;}
+    s.duty_verified=nv;toast(nv?'Duty verified.':'Duty unverified.');m.remove();drawStudents();
+  };
+}
+
+/* ---------- Log Book Verification ---------- */
+let LV_STUDENT=null, LV_WEEK=0, LV_WEEKS=[], LV_ENTRIES={};
+async function supLogVerify(){
+  $('view').innerHTML=`<h1 class="page-title">Log Book Verification</h1>
+    <div class="card">
+      <div class="toolbar">
+        <label class="muted">Student</label>
+        <select id="lvStu" class="grow" style="max-width:360px"><option value="">— select student —</option></select>
+      </div>
+      <div id="lvBody" class="muted">Select a student to view their log book.</div>
+    </div>`;
+  if(!SUP_STUDENTS.length){const {data}=await sb.from('profiles').select('*').eq('role','student').order('full_name');SUP_STUDENTS=data||[];}
+  const sel=$('lvStu');
+  SUP_STUDENTS.forEach(s=>sel.appendChild(el(`<option value="${s.id}">${esc(s.full_name||s.email)}</option>`)));
+  sel.onchange=()=>{LV_STUDENT=SUP_STUDENTS.find(s=>s.id===sel.value)||null;LV_WEEK=0;renderLV();};
+}
+function renderLV(){
+  const body=$('lvBody');
+  if(!LV_STUDENT){body.innerHTML='<span class="muted">Select a student.</span>';return;}
+  LV_WEEKS=buildWeeks(LV_STUDENT.internship_start,LV_STUDENT.internship_end);
+  body.innerHTML=`
+    <div class="toolbar">
+      <label class="muted">Week</label>
+      <select id="lvWk">${LV_WEEKS.map((w,i)=>`<option value="${i}" ${i===LV_WEEK?'selected':''}>WEEK ${w.n} : ${fmtDate(w.start)} - ${fmtDate(w.end)}</option>`).join('')}</select>
+      <div class="grow"></div>
+      <button class="btn sm" id="lvBatch">Batch Verify Ticked</button>
+    </div>
+    <table><thead><tr><th>Date/Day</th><th>Log / Activity</th><th>Status</th><th>Action</th><th>✓</th></tr></thead>
+    <tbody id="lvRows"></tbody></table>`;
+  $('lvWk').onchange=e=>{LV_WEEK=+e.target.value;loadLVWeek();};
+  $('lvBatch').onclick=batchVerify;
+  loadLVWeek();
+}
+async function loadLVWeek(){
+  const w=LV_WEEKS[LV_WEEK];
+  const {data}=await sb.from('logbook_entries').select('*').eq('student_id',LV_STUDENT.id)
+    .gte('entry_date',iso(w.start)).lte('entry_date',iso(w.end));
+  LV_ENTRIES={};(data||[]).forEach(r=>LV_ENTRIES[r.entry_date]=r);
+  const rows=$('lvRows');rows.innerHTML='';
+  for(let i=0;i<7;i++){
+    const d=new Date(w.start);d.setDate(d.getDate()+i);const key=iso(d);const e=LV_ENTRIES[key];
+    const act=e?.activity?esc(e.activity.slice(0,80))+(e.activity.length>80?'…':''):'<span class="muted">N/A</span>';
+    const st=e?`<span class="status s-${e.status}">${e.status}</span>`:'<span class="muted">—</span>';
+    const tr=el(`<tr>
+      <td><b>${fmtDate(d)}</b><br><span class="muted">${dayName(d)}</span></td>
+      <td>${act}</td><td>${st}</td><td></td>
+      <td>${e&&e.status!=='verified'?`<input type="checkbox" data-k="${key}">`:''}</td></tr>`);
+    const td=tr.children[3];
+    if(e){const b=el('<button class="btn sm ghost">View</button>');b.onclick=()=>lvEntryModal(key);td.appendChild(b);}
+    else td.innerHTML='<span class="muted">—</span>';
+    rows.appendChild(tr);
+  }
+}
+function lvEntryModal(key){
+  const e=LV_ENTRIES[key];
+  const m=el(`<div class="modal-bg"><div class="modal">
+    <h3>${esc(LV_STUDENT.full_name)} — ${fmtDate(key)} (${dayName(key)})</h3>
+    <div class="card" style="white-space:pre-wrap;background:#fafbfc">${esc(e.activity||'(empty)')}</div>
+    <div class="hint">Attachment: ${e.attachment_url?`<a href="${esc(e.attachment_url)}" target="_blank">view file</a>`:'N/A'}</div>
+    <div class="field" style="margin-top:12px"><label>Remarks (optional)</label><textarea id="lv_rm" rows="3">${esc(e.remarks||'')}</textarea></div>
+    <div class="modal-actions">
+      <button class="btn ghost" id="lv_close">Close</button>
+      <button class="btn" style="background:#c3140d" id="lv_reject">✗ Reject</button>
+      <button class="btn ok" id="lv_verify">✓ Verify</button>
+    </div>
+  </div></div>`);
+  document.body.appendChild(m);
+  m.querySelector('#lv_close').onclick=()=>m.remove();
+  const act=async(status)=>{
+    const rm=m.querySelector('#lv_rm').value.trim();
+    const {error}=await sb.from('logbook_entries').update({status,remarks:rm,verified_by:ME.id,verified_at:new Date().toISOString()}).eq('id',e.id);
+    if(error){toast(error.message);return;}
+    m.remove();toast(status==='verified'?'Verified.':'Rejected.');loadLVWeek();
+  };
+  m.querySelector('#lv_verify').onclick=()=>act('verified');
+  m.querySelector('#lv_reject').onclick=()=>act('rejected');
+}
+async function batchVerify(){
+  const keys=[...document.querySelectorAll('#lvRows input[type=checkbox]:checked')].map(c=>c.dataset.k);
+  if(!keys.length){toast('Tick at least one entry.');return;}
+  const ids=keys.map(k=>LV_ENTRIES[k].id);
+  const {error}=await sb.from('logbook_entries').update({status:'verified',verified_by:ME.id,verified_at:new Date().toISOString()}).in('id',ids);
+  if(error){toast(error.message);return;}
+  toast(`Verified ${ids.length} entr${ids.length>1?'ies':'y'}.`);loadLVWeek();
+}
+
+/* ---------- Departments ---------- */
+async function supDepts(){
+  $('view').innerHTML=`<h1 class="page-title">Departments</h1>
+    <div class="card">
+      <div class="toolbar"><input id="dName" class="grow" placeholder="New department name (e.g. CCTV, AI Chatbot)" style="padding:9px 11px;border:1px solid var(--line);border-radius:8px"><button class="btn" id="dAdd">Add</button></div>
+      <table><thead><tr><th>Department</th><th>Students</th><th>Action</th></tr></thead><tbody id="dRows"></tbody></table>
+      <p class="hint">A student can be left without a department (for those doing mixed work).</p>
+    </div>`;
+  $('dAdd').onclick=async()=>{
+    const name=$('dName').value.trim();if(!name)return;
+    const {error}=await sb.from('departments').insert({name});
+    if(error){toast(error.message);return;}
+    $('dName').value='';await loadDepts();supDepts();toast('Department added.');
+  };
+  await loadDepts();
+  if(!SUP_STUDENTS.length){const {data}=await sb.from('profiles').select('id,department_id').eq('role','student');SUP_STUDENTS=data||[];}
+  const rows=$('dRows');rows.innerHTML='';
+  if(!DEPTS.length)rows.innerHTML='<tr><td colspan="3" class="muted">No departments yet.</td></tr>';
+  DEPTS.forEach(d=>{
+    const count=SUP_STUDENTS.filter(s=>s.department_id===d.id).length;
+    const tr=el(`<tr><td><b>${esc(d.name)}</b></td><td>${count}</td><td></td></tr>`);
+    const b=el('<button class="btn sm ghost">Delete</button>');
+    b.onclick=async()=>{if(!confirm('Delete department "'+d.name+'"? Students keep their records but lose this label.'))return;
+      const {error}=await sb.from('departments').delete().eq('id',d.id);
+      if(error){toast(error.message);return;}await loadDepts();supDepts();toast('Deleted.');};
+    tr.lastElementChild.appendChild(b);rows.appendChild(tr);
+  });
+}
+
+/* ---------- start ---------- */
+sb.auth.onAuthStateChange((_e,s)=>{ if(!s){$('app').classList.add('hidden');$('login').classList.remove('hidden');} });
+boot();
+</script>
+</body>
+</html>
