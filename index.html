@@ -194,7 +194,7 @@ function renderRich(h){if(h==null||(''+h).trim()==='')return '<span class="muted
 function escProg(s){return esc(titleCase(s));}  // programme shown in Title Case
 function fmtDate(d){const x=new Date(d);return x.toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'});}
 function dayName(d){return new Date(d).toLocaleDateString('en-GB',{weekday:'short'});}
-function iso(d){return new Date(d).toISOString().slice(0,10);}
+function iso(d){const x=new Date(d);return `${x.getFullYear()}-${String(x.getMonth()+1).padStart(2,'0')}-${String(x.getDate()).padStart(2,'0')}`;}
 
 /* week ranges (Mon–Sun) from start..end */
 function mondayOf(d){const x=new Date(d);const g=(x.getDay()+6)%7;x.setDate(x.getDate()-g);x.setHours(0,0,0,0);return x;}
