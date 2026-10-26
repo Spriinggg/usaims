@@ -3,6 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<link href="https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.snow.css" rel="stylesheet">
 <title>UsAims — US Pizza Intern Log Book</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48'%3E%3Ccircle cx='24' cy='24' r='24' fill='%23c3140d'/%3E%3Cpath d='M24 10 L39 34 Q24 40 9 34 Z' fill='%23ffd27a'/%3E%3Cpath d='M9 34 Q24 40.5 39 34' fill='none' stroke='%23fff' stroke-width='3.5' stroke-linecap='round'/%3E%3Ccircle cx='24' cy='21' r='2.8' fill='%23c3140d'/%3E%3Ccircle cx='18' cy='29' r='2.5' fill='%23c3140d'/%3E%3Ccircle cx='30' cy='29' r='2.5' fill='%23c3140d'/%3E%3C/svg%3E">
 <style>
@@ -83,6 +84,13 @@
   .modal{background:#fff;border-radius:12px;max-width:640px;width:100%;padding:20px;}
   .modal h3{margin:0 0 12px;color:var(--red);font-size:16px;}
   .counter{font-size:11px;color:var(--muted);text-align:right;margin-top:3px;}
+  #en_editor{height:300px;background:#fff;}
+  .ql-editor{min-height:260px;font-size:14px;line-height:1.55;}
+  .ql-toolbar.ql-snow,.ql-container.ql-snow{border-color:#e3e6ea;}
+  .ql-toolbar.ql-snow{border-top-left-radius:8px;border-top-right-radius:8px;}
+  .ql-container.ql-snow{border-bottom-left-radius:8px;border-bottom-right-radius:8px;}
+  .rt-view{background:#fafbfc;border:1px solid #e3e6ea;border-radius:8px;padding:12px 14px;line-height:1.55;font-size:14px;max-height:420px;overflow:auto;}
+  .rt-view p{margin:6px 0;} .rt-view ul,.rt-view ol{margin:6px 0 6px 22px;} .rt-view h1,.rt-view h2,.rt-view h3{margin:10px 0 4px;} .rt-view blockquote{border-left:3px solid var(--orange);margin:8px 0;padding-left:12px;color:#444;}
   .modal-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:14px;}
   .toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--ink);color:#fff;padding:10px 18px;border-radius:8px;font-size:13px;z-index:80;opacity:0;transition:opacity .2s;}
   .toast.show{opacity:1;}
@@ -155,6 +163,7 @@
 <div id="toast" class="toast"></div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.js"></script>
 <script>
 /* =======================================================================
    CONFIG  —  paste your NEW Supabase project URL + anon key here
@@ -179,6 +188,9 @@ const el = (html)=>{const t=document.createElement('template');t.innerHTML=html.
 function toast(m){const t=$('toast');t.textContent=m;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2200);}
 function esc(s){return (s==null?'':String(s)).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
 function titleCase(s){return (s==null?'':String(s)).toLowerCase().replace(/([a-z])([a-z]*)/g,(m,a,b)=>a.toUpperCase()+b);}
+function isHtml(s){return /<[a-z/][\s\S]*>/i.test(s||'');}
+function stripHtml(h){if(!h)return '';if(!isHtml(h))return h;const d=document.createElement('div');d.innerHTML=h;return (d.textContent||'').replace(/\s+/g,' ').trim();}
+function renderRich(h){if(h==null||(''+h).trim()==='')return '<span class="muted">(empty)</span>';return isHtml(h)?h:'<div style="white-space:pre-wrap">'+esc(h)+'</div>';}
 function escProg(s){return esc(titleCase(s));}  // programme shown in Title Case
 function fmtDate(d){const x=new Date(d);return x.toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'});}
 function dayName(d){return new Date(d).toLocaleDateString('en-GB',{weekday:'short'});}
@@ -421,7 +433,7 @@ async function loadStudentWeek(weeks){
   for(let i=0;i<7;i++){
     const d=new Date(w.start);d.setDate(d.getDate()+i);const key=iso(d);
     const e=STU_ENTRIES[key];
-    const act=e?.activity?esc(e.activity.slice(0,70))+(e.activity.length>70?'…':''):'<span class="muted">N/A</span>';
+    const _t=e?.activity?stripHtml(e.activity):'';const act=_t?esc(_t.slice(0,70))+(_t.length>70?'…':''):'<span class="muted">N/A</span>';
     const st=e?`<span class="status s-${e.status}">${e.status}</span>`:'<span class="muted">—</span>';
     const canEdit=!e || e.status!=='verified';
     const tr=el(`<tr>
@@ -446,8 +458,9 @@ function entryModal(dateKey,weeks){
     <h3>Log Entry — ${fmtDate(dateKey)} (${dayName(dateKey)})</h3>
     <div class="field">
       <label>Task / Activity</label>
-      <textarea id="en_act" rows="9" maxlength="${MAX_CHARS}" ${readonly?'disabled':''} placeholder="Describe what you did today...">${esc(e.activity||'')}</textarea>
-      <div class="counter"><span id="cc">${(e.activity||'').length}</span>/${MAX_CHARS}</div>
+      ${readonly
+        ? `<div class="rt-view">${renderRich(e.activity)}</div>`
+        : `<div id="en_editor"></div><div class="counter"><span id="cc">0</span>/${MAX_CHARS}</div>`}
     </div>
     <div class="field"><label>Attachment (optional)</label>
       ${e.attachment_url?`<div class="hint">Current: <a href="${esc(e.attachment_url)}" target="_blank">view file</a></div>`:''}
@@ -462,7 +475,17 @@ function entryModal(dateKey,weeks){
     </div>
   </div></div>`);
   document.body.appendChild(m);
-  const ta=m.querySelector('#en_act'); if(ta&&!readonly) ta.oninput=()=>m.querySelector('#cc').textContent=ta.value.length;
+  let quill=null;
+  if(!readonly){
+    quill=new Quill(m.querySelector('#en_editor'),{theme:'snow',placeholder:'Describe what you did today...',modules:{toolbar:[
+      [{header:[1,2,3,false]}],['bold','italic','underline','strike'],
+      [{list:'ordered'},{list:'bullet'}],['blockquote','link'],['clean']
+    ]}});
+    if(e.activity){ if(isHtml(e.activity)) quill.clipboard.dangerouslyPasteHTML(e.activity); else quill.setText(e.activity); }
+    const cc=m.querySelector('#cc');
+    const upd=()=>{let n=quill.getText().replace(/\n$/,'').length;if(n>MAX_CHARS){quill.deleteText(MAX_CHARS,n-MAX_CHARS);n=MAX_CHARS;}cc.textContent=n;};
+    quill.on('text-change',upd);upd();
+  }
   m.querySelector('#en_cancel').onclick=()=>m.remove();
   const delBtn=m.querySelector('#en_delete');
   if(delBtn){ delBtn.onclick=async()=>{
@@ -479,7 +502,7 @@ function entryModal(dateKey,weeks){
       let url=e.attachment_url||null;
       const f=m.querySelector('#en_file')?.files[0];
       if(f){const u=await uploadFile(f);if(u)url=u;}
-      const payload={student_id:ME.id,entry_date:dateKey,activity:ta.value,attachment_url:url,status,updated_at:new Date().toISOString()};
+      const payload={student_id:ME.id,entry_date:dateKey,activity:quill.root.innerHTML,attachment_url:url,status,updated_at:new Date().toISOString()};
       const {error}=await sb.from('logbook_entries').upsert(payload,{onConflict:'student_id,entry_date'});
       btns.forEach(b=>b.disabled=false);
       if(error){toast(error.message);return;}
@@ -487,7 +510,7 @@ function entryModal(dateKey,weeks){
       loadStudentWeek(weeks);
     };
     m.querySelector('#en_draft').onclick=()=>save('draft');
-    m.querySelector('#en_submit').onclick=()=>{if(!ta.value.trim()){toast('Please write the activity first.');return;}save('submitted');};
+    m.querySelector('#en_submit').onclick=()=>{if(!quill.getText().trim()){toast('Please write the activity first.');return;}save('submitted');};
   }
 }
 
@@ -626,7 +649,7 @@ async function loadLVWeek(){
   const rows=$('lvRows');rows.innerHTML='';
   for(let i=0;i<7;i++){
     const d=new Date(w.start);d.setDate(d.getDate()+i);const key=iso(d);const e=LV_ENTRIES[key];
-    const act=e?.activity?esc(e.activity.slice(0,80))+(e.activity.length>80?'…':''):'<span class="muted">N/A</span>';
+    const _t=e?.activity?stripHtml(e.activity):'';const act=_t?esc(_t.slice(0,80))+(_t.length>80?'…':''):'<span class="muted">N/A</span>';
     const st=e?`<span class="status s-${e.status}">${e.status}</span>`:'<span class="muted">—</span>';
     const tr=el(`<tr>
       <td><b>${fmtDate(d)}</b><br><span class="muted">${dayName(d)}</span></td>
@@ -642,7 +665,7 @@ function lvEntryModal(key){
   const e=LV_ENTRIES[key];
   const m=el(`<div class="modal-bg"><div class="modal">
     <h3>${esc(LV_STUDENT.full_name)} — ${fmtDate(key)} (${dayName(key)})</h3>
-    <div class="card" style="white-space:pre-wrap;background:#fafbfc">${esc(e.activity||'(empty)')}</div>
+    <div class="rt-view">${renderRich(e.activity)}</div>
     <div class="hint">Attachment: ${e.attachment_url?`<a href="${esc(e.attachment_url)}" target="_blank">view file</a>`:'N/A'}</div>
     <div class="field" style="margin-top:12px"><label>Remarks (optional)</label><textarea id="lv_rm" rows="3">${esc(e.remarks||'')}</textarea></div>
     <div class="modal-actions">
