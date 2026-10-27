@@ -368,7 +368,9 @@ function editDutyModal(){
   const p=ME;
   const m=el(`<div class="modal-bg"><div class="modal">
     <h3>Edit My Info</h3>
-    <div class="field"><label>Profile Photo</label><input type="file" id="e_photo" accept="image/*"></div>
+    <div class="field"><label>Profile Photo</label><input type="file" id="e_photo" accept="image/*">
+      ${p.photo_url?`<label class="hint" style="display:flex;align-items:center;gap:6px;margin-top:6px;cursor:pointer"><input type="checkbox" id="e_delphoto" style="width:auto;margin:0"> Remove current photo</label>`:''}
+    </div>
     <div class="row">
       <div class="field" style="flex:1;min-width:220px"><label>Full Name</label><input id="e_name" value="${esc(p.full_name||'')}" placeholder="Full name (as per IC)"></div>
       <div class="field" style="flex:1;min-width:150px"><label>Matric No.</label><input id="e_matric" value="${esc(p.matric_no||'')}" placeholder="e.g. A12CS1234"></div>
@@ -392,6 +394,8 @@ function editDutyModal(){
   m.querySelector('#e_save').onclick=async()=>{
     const btn=m.querySelector('#e_save');btn.disabled=true;
     let photo=p.photo_url;
+    const del=m.querySelector('#e_delphoto');
+    if(del&&del.checked) photo=null;
     const f=m.querySelector('#e_photo').files[0];
     if(f){ const url=await uploadFile(f); if(url) photo=url; }
     const patch={
