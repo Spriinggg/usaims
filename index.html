@@ -20,9 +20,13 @@
   /* ---------- Login ---------- */
   #login{min-height:100vh;display:flex;align-items:center;justify-content:center;
     background:linear-gradient(135deg,var(--red),var(--orange));padding:16px;}
-  .login-card{background:#fff;border-radius:14px;padding:30px 26px;width:100%;max-width:380px;box-shadow:0 20px 50px rgba(0,0,0,.25);}
-  .login-card h1{margin:0 0 4px;font-size:20px;color:var(--red);}
-  .login-card p.sub{margin:0 0 18px;color:var(--muted);font-size:12.5px;}
+  .login-card{background:#fff;border-radius:18px;padding:32px 28px;width:100%;max-width:390px;box-shadow:0 24px 60px rgba(0,0,0,.28);}
+  .login-brand{text-align:center;margin-bottom:22px;}
+  .login-mark{display:inline-flex;padding:10px;border-radius:50%;background:linear-gradient(135deg,var(--red),var(--orange));box-shadow:0 8px 20px rgba(195,20,13,.35);margin-bottom:12px;}
+  .login-card h1{margin:0;font-size:32px;font-weight:800;letter-spacing:1px;color:var(--red);}
+  .login-card h1 .hl{color:var(--orange);}
+  .login-card p.sub{margin:3px 0 0;color:var(--muted);font-size:13px;letter-spacing:.5px;}
+  .login-rule{height:3px;width:46px;margin:14px auto 0;border-radius:3px;background:linear-gradient(90deg,var(--red),var(--orange));}
   .field{margin-bottom:12px;}
   .field label{display:block;font-size:12px;color:var(--muted);margin-bottom:4px;}
   .field input,.field select,.field textarea{width:100%;padding:9px 11px;border:1px solid var(--line);border-radius:8px;font-size:14px;font-family:inherit;}
@@ -108,8 +112,22 @@
 <!-- ================= LOGIN ================= -->
 <div id="login">
   <div class="login-card">
-    <h1>USIP</h1>
-    <p class="sub">US Intern Portal</p>
+    <div class="login-brand">
+      <span class="login-mark">
+        <svg viewBox="0 0 48 48" width="68" height="68" aria-hidden="true">
+          <circle cx="24" cy="24" r="23" fill="#fff"/>
+          <circle cx="24" cy="24" r="23" fill="none" stroke="#c3140d" stroke-width="2"/>
+          <path d="M24 11 L37 33 Q24 38 11 33 Z" fill="#f39200"/>
+          <path d="M11 33 Q24 38.5 37 33" fill="none" stroke="#c3140d" stroke-width="3.2" stroke-linecap="round"/>
+          <circle cx="24" cy="21" r="2.4" fill="#c3140d"/>
+          <circle cx="19" cy="28" r="2.1" fill="#c3140d"/>
+          <circle cx="29" cy="28" r="2.1" fill="#c3140d"/>
+        </svg>
+      </span>
+      <h1>US<span class="hl">IP</span></h1>
+      <p class="sub">US Intern Portal</p>
+      <div class="login-rule"></div>
+    </div>
 
     <div id="loginForm">
       <div class="field"><label>Email (Lark email)</label><input id="li_email" type="email" placeholder="name@my.uspizza.com"></div>
