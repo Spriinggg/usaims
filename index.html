@@ -226,6 +226,7 @@ const CONFIG = {
 const sb = window.supabase.createClient(CONFIG.url, CONFIG.key);
 const DEFAULT_START = "2026-09-21";   // fallback internship start if a student's start date is empty
 const MAX_CHARS = 5000;
+const IDLE_MINUTES = 30;              // auto logout after this many minutes of inactivity
 
 let ME = null;        // my profile row
 let DEPTS = [];       // departments cache
@@ -290,6 +291,20 @@ $('su_btn').onclick=async()=>{
 };
 
 $('logoutBtn').onclick=async()=>{await sb.auth.signOut();location.reload();};
+
+/* ---- auto logout after inactivity ---- */
+let idleTimer=null;
+function resetIdle(){
+  if(idleTimer) clearTimeout(idleTimer);
+  if($('app').classList.contains('hidden')) return;  // only when logged in
+  idleTimer=setTimeout(async()=>{
+    try{ sessionStorage.setItem('usip_idle','1'); }catch(e){}
+    await sb.auth.signOut();
+    location.reload();
+  }, IDLE_MINUTES*60*1000);
+}
+['click','keydown','mousemove','touchstart','scroll'].forEach(ev=>
+  document.addEventListener(ev, resetIdle, {passive:true}));
 $('pwBtn').onclick=changePassModal;
 
 /* show/hide password — works for static fields and modal fields */
@@ -342,6 +357,7 @@ async function boot(){
   $('login').classList.add('hidden');$('app').classList.remove('hidden');
   $('whoName').innerHTML=esc(ME.full_name||ME.email)+'<small>'+(ME.role==='supervisor'?'Supervisor':'Intern')+'</small>';
   if(ME.role==='supervisor') renderSupervisor(); else renderStudent();
+  resetIdle();   // start the inactivity timer
 }
 
 async function loadDepts(){
@@ -777,6 +793,9 @@ async function supDepts(){
 
 /* ---------- start ---------- */
 sb.auth.onAuthStateChange((_e,s)=>{ if(!s){$('app').classList.add('hidden');$('login').classList.remove('hidden');} });
+/* notice if the previous session was auto-logged-out for inactivity */
+try{ if(sessionStorage.getItem('usip_idle')){ sessionStorage.removeItem('usip_idle');
+  $('li_err').textContent='You were logged out due to inactivity. Please log in again.'; } }catch(e){}
 boot();
 </script>
 </body>
